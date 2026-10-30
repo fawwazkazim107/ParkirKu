@@ -7,7 +7,7 @@ manager = ParkingManager()
 
 API_KEY = "ganti-dengan-kunci-rahasia"
 
-init_db(jumlah_slot=6)
+init_db()
 
 
 @app.route("/")

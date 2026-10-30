@@ -8,7 +8,7 @@
   <style>
     body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; }
     .kosong-besar { font-size: 3rem; font-weight: bold; text-align: center; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
     .slot { padding: 12px; border-radius: 8px; text-align: center; color: #fff; }
     .Kosong { background: #2e9e4f; }
     .Terisi { background: #d33; }
@@ -20,7 +20,7 @@
   <div class="kosong-besar"><span id="kosong">-</span> / <span id="total">-</span></div>
 
   <h2>Daftar Slot</h2>
-  <div class="grid" id="daftar"></div>
+  <div id="daftar"></div>
 
   <h2>Riwayat Keterisian per Jam</h2>
   <canvas id="grafik"></canvas>
@@ -32,9 +32,19 @@
       const data = await (await fetch("/api/slots")).json();
       document.getElementById("kosong").textContent = data.ringkasan.kosong;
       document.getElementById("total").textContent = data.ringkasan.total;
-      document.getElementById("daftar").innerHTML = data.slots.map(s =>
-        `<div class="slot ${s.status}"><b>${s.kode}</b><br>${s.status}</div>`
-      ).join("");
+
+      const grup = {};
+      data.slots.forEach(s => {
+        (grup[s.lokasi] = grup[s.lokasi] || []).push(s);
+      });
+
+      document.getElementById("daftar").innerHTML = Object.keys(grup).map(lokasi => {
+        const kosong = grup[lokasi].filter(s => s.status === "Kosong").length;
+        return `<h3>${lokasi} (${kosong} / ${grup[lokasi].length} kosong)</h3>
+          <div class="grid">` + grup[lokasi].map(s =>
+            `<div class="slot ${s.status}"><b>${s.kode}</b><br>${s.status}</div>`
+          ).join("") + `</div>`;
+      }).join("");
     }
 
     async function muatRiwayat() {
