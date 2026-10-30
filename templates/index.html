@@ -6,12 +6,34 @@
   <title>ParkirKu</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; }
+    body {
+      background: #000;
+      color: #fff;
+      font-family: sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 16px;
+    }
     .kosong-besar { font-size: 3rem; font-weight: bold; text-align: center; }
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
-    .slot { padding: 12px; border-radius: 8px; text-align: center; color: #fff; }
-    .Kosong { background: #2e9e4f; }
-    .Terisi { background: #d33; }
+    .slot {
+      padding: 12px 8px;
+      border-radius: 8px;
+      text-align: center;
+      background: #0a0a0a;
+      border: 2px solid;
+    }
+    .Kosong { border-color: #2e9e4f; }
+    .Terisi { border-color: #d33; }
+    .mobil {
+      width: 30px; height: 48px; margin: 0 auto 6px;
+      border-radius: 9px; background: #4da6ff;
+      background-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+      background-size: 70% 22%, 70% 14%;
+      background-position: 50% 16%, 50% 86%;
+      background-repeat: no-repeat;
+    }
+    .Kosong .mobil { visibility: hidden; }
   </style>
 </head>
 <body>
@@ -27,6 +49,7 @@
 
   <script>
     let chart;
+    Chart.defaults.color = "#fff";
 
     async function muatSlot() {
       const data = await (await fetch("/api/slots")).json();
@@ -34,16 +57,15 @@
       document.getElementById("total").textContent = data.ringkasan.total;
 
       const grup = {};
-      data.slots.forEach(s => {
-        (grup[s.lokasi] = grup[s.lokasi] || []).push(s);
-      });
+      data.slots.forEach(s => (grup[s.lokasi] = grup[s.lokasi] || []).push(s));
 
       document.getElementById("daftar").innerHTML = Object.keys(grup).map(lokasi => {
         const kosong = grup[lokasi].filter(s => s.status === "Kosong").length;
         return `<h3>${lokasi} (${kosong} / ${grup[lokasi].length} kosong)</h3>
           <div class="grid">` + grup[lokasi].map(s =>
-            `<div class="slot ${s.status}"><b>${s.kode}</b><br>${s.status}</div>`
-          ).join("") + `</div>`;
+            `<div class="slot ${s.status}">
+              <div class="mobil"></div><b>${s.kode}</b><br>${s.status}
+            </div>`).join("") + `</div>`;
       }).join("");
     }
 
@@ -54,8 +76,16 @@
       if (chart) chart.destroy();
       chart = new Chart(document.getElementById("grafik"), {
         type: "bar",
-        data: { labels, datasets: [{ label: "% terisi", data: nilai }] },
-        options: { scales: { y: { min: 0, max: 100 } } }
+        data: {
+          labels,
+          datasets: [{ label: "% terisi", data: nilai, backgroundColor: "#4da6ff" }]
+        },
+        options: {
+          scales: {
+            y: { min: 0, max: 100, grid: { color: "#333" } },
+            x: { grid: { color: "#333" } }
+          }
+        }
       });
     }
 
