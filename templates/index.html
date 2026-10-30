@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ParkirKu</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 16px; }
+    .kosong-besar { font-size: 3rem; font-weight: bold; text-align: center; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+    .slot { padding: 12px; border-radius: 8px; text-align: center; color: #fff; }
+    .Kosong { background: #2e9e4f; }
+    .Terisi { background: #d33; }
+  </style>
+</head>
+<body>
+  <h1>ParkirKu</h1>
+  <p>Slot kosong saat ini:</p>
+  <div class="kosong-besar"><span id="kosong">-</span> / <span id="total">-</span></div>
+
+  <h2>Daftar Slot</h2>
+  <div class="grid" id="daftar"></div>
+
+  <h2>Riwayat Keterisian per Jam</h2>
+  <canvas id="grafik"></canvas>
+
+  <script>
+    let chart;
+
+    async function muatSlot() {
+      const data = await (await fetch("/api/slots")).json();
+      document.getElementById("kosong").textContent = data.ringkasan.kosong;
+      document.getElementById("total").textContent = data.ringkasan.total;
+      document.getElementById("daftar").innerHTML = data.slots.map(s =>
+        `<div class="slot ${s.status}"><b>${s.kode}</b><br>${s.status}</div>`
+      ).join("");
+    }
+
+    async function muatRiwayat() {
+      const data = await (await fetch("/api/riwayat")).json();
+      const labels = data.map(d => d.jam);
+      const nilai = data.map(d => d.persen_terisi);
+      if (chart) chart.destroy();
+      chart = new Chart(document.getElementById("grafik"), {
+        type: "bar",
+        data: { labels, datasets: [{ label: "% terisi", data: nilai }] },
+        options: { scales: { y: { min: 0, max: 100 } } }
+      });
+    }
+
+    function refresh() { muatSlot(); muatRiwayat(); }
+    refresh();
+    setInterval(refresh, 5000);
+  </script>
+</body>
+</html>
