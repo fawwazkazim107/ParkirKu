@@ -1,7 +1,9 @@
+import os
 import sqlite3
 from datetime import datetime
 
-DB_PATH = "parkirku.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "parkirku.db")
 STATUS_VALID = ("Kosong", "Terisi")
 
 
@@ -11,7 +13,7 @@ def get_conn():
     return conn
 
 
-def init_db(jumlah_slot=6):
+def init_db(zona=("A", "B"), per_zona=5):
     """Buat 2 tabel dan isi data awal slot jika masih kosong."""
     conn = get_conn()
     conn.executescript("""
@@ -31,11 +33,12 @@ def init_db(jumlah_slot=6):
     """)
     ada = conn.execute("SELECT COUNT(*) FROM parking_slots").fetchone()[0]
     if ada == 0:
-        for i in range(1, jumlah_slot + 1):
-            conn.execute(
-                "INSERT INTO parking_slots (kode, lokasi) VALUES (?, ?)",
-                (f"A{i}", "Parkiran Utama"),
-            )
+        for z in zona:
+            for i in range(1, per_zona + 1):
+                conn.execute(
+                    "INSERT INTO parking_slots (kode, lokasi) VALUES (?, ?)",
+                    (f"{z}{i}", f"Area {z}"),
+                )
     conn.commit()
     conn.close()
 
@@ -84,8 +87,12 @@ class ParkingManager:
         if slot is None:
             conn.close()
             return False
-        conn.execute("UPDATE parking_slots SET status = ? WHERE id = ?", (status, slot["id"]))
-        log = ParkingLog(slot["id"], status, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        conn.execute(
+            "UPDATE parking_slots SET status = ? WHERE id = ?", (status, slot["id"])
+        )
+        log = ParkingLog(
+            slot["id"], status, datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
         conn.execute(
             "INSERT INTO parking_logs (slot_id, status, waktu) VALUES (?, ?, ?)",
             (log.slot_id, log.status, log.waktu),
