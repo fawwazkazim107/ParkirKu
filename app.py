@@ -83,9 +83,13 @@ def api_slots():
         "slots": [s.to_dict() for s in manager.daftar_slot()], 
     })
 
-@app.route("/api/riwayat")
-def api_riwayat():
-    return jsonify(manager.riwayat_per_jam())
+@app.route("/api/riwayat-area")
+def api_riwayat_area():
+    return jsonify(manager.riwayat_per_area())
+
+@app.route("/api/riwayat-slot")
+def api_riwayat_slot():
+    return jsonify(manager.riwayat_per_slot())
 
 if __name__ == "__main__":
     app.run(debug=True, use_reloader=False)

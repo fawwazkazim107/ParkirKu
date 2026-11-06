@@ -44,12 +44,37 @@
   <h2>Daftar Slot</h2>
   <div id="daftar"></div>
 
-  <h2>Riwayat Keterisian per Jam</h2>
-  <canvas id="grafik"></canvas>
+  <h2>Riwayat Keterisian per Area</h2>
+  <canvas id="grafik-area"></canvas>
+
+  <h2>Riwayat Keterisian per Slot</h2>
+  <canvas id="grafik-slot"></canvas>
 
   <script>
-    let chart;
     Chart.defaults.color = "#fff";
+    const charts = {};
+
+    function gambarBatang(id, labels, nilai) {
+      if (charts[id]) {
+        charts[id].data.labels = labels;
+        charts[id].data.datasets[0].data = nilai;
+        charts[id].update();
+        return;
+      }
+      charts[id] = new Chart(document.getElementById(id), {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [{ label: "% terisi", data: nilai, backgroundColor: "#4da6ff" }]
+        },
+        options: {
+          scales: {
+            y: { min: 0, max: 100, grid: { color: "#333" } },
+            x: { grid: { color: "#333" } }
+          }
+        }
+      });
+    }
 
     async function muatSlot() {
       const data = await (await fetch("/api/slots")).json();
@@ -69,27 +94,21 @@
       }).join("");
     }
 
-    async function muatRiwayat() {
-      const data = await (await fetch("/api/riwayat")).json();
-      const labels = data.map(d => d.jam);
-      const nilai = data.map(d => d.persen_terisi);
-      if (chart) chart.destroy();
-      chart = new Chart(document.getElementById("grafik"), {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [{ label: "% terisi", data: nilai, backgroundColor: "#4da6ff" }]
-        },
-        options: {
-          scales: {
-            y: { min: 0, max: 100, grid: { color: "#333" } },
-            x: { grid: { color: "#333" } }
-          }
-        }
-      });
+    async function muatGrafikArea() {
+      const data = await (await fetch("/api/riwayat-area")).json();
+      gambarBatang("grafik-area", data.map(d => d.lokasi), data.map(d => d.persen_terisi));
     }
 
-    function refresh() { muatSlot(); muatRiwayat(); }
+    async function muatGrafikSlot() {
+      const data = await (await fetch("/api/riwayat-slot")).json();
+      gambarBatang("grafik-slot", data.map(d => d.kode), data.map(d => d.persen_terisi));
+    }
+
+    function refresh() {
+      muatSlot();
+      muatGrafikArea();
+      muatGrafikSlot();
+    }
     refresh();
     setInterval(refresh, 5000);
   </script>

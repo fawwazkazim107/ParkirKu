@@ -13,7 +13,7 @@ def get_conn():
     return conn
 
 
-def init_db(zona=("A", "B"), per_zona=5):
+def init_db(zona=("A", "B"), per_zona=4):
     """Buat 2 tabel dan isi data awal slot jika masih kosong."""
     conn = get_conn()
     conn.executescript("""
@@ -106,18 +106,42 @@ class ParkingManager:
         kosong = sum(1 for s in slots if s.status == "Kosong")
         return {"total": len(slots), "kosong": kosong, "terisi": len(slots) - kosong}
 
-    def riwayat_per_jam(self):
-        """Persentase keterisian per jam dari data log."""
+    def riwayat_per_area(self):
+        """Persentase keterisian tiap area dari data log."""
         conn = get_conn()
         rows = conn.execute("""
-            SELECT strftime('%H', waktu) AS jam,
-                   SUM(CASE WHEN status = 'Terisi' THEN 1 ELSE 0 END) AS terisi,
-                   COUNT(*) AS total
-            FROM parking_logs
-            GROUP BY jam ORDER BY jam
+            SELECT s.lokasi,
+                   COUNT(l.id) AS total,
+                   SUM(CASE WHEN l.status = 'Terisi' THEN 1 ELSE 0 END) AS terisi
+            FROM parking_slots s
+            LEFT JOIN parking_logs l ON l.slot_id = s.id
+            GROUP BY s.lokasi ORDER BY s.lokasi
         """).fetchall()
         conn.close()
         return [
-            {"jam": r["jam"] + ":00", "persen_terisi": round(r["terisi"] * 100 / r["total"])}
+            {
+                "lokasi": r["lokasi"],
+                "persen_terisi": round((r["terisi"] or 0) * 100 / r["total"]) if r["total"] else 0,
+            }
+            for r in rows
+        ]
+
+    def riwayat_per_slot(self):
+        """Persentase keterisian tiap slot dari data log."""
+        conn = get_conn()
+        rows = conn.execute("""
+            SELECT s.kode,
+                   COUNT(l.id) AS total,
+                   SUM(CASE WHEN l.status = 'Terisi' THEN 1 ELSE 0 END) AS terisi
+            FROM parking_slots s
+            LEFT JOIN parking_logs l ON l.slot_id = s.id
+            GROUP BY s.id ORDER BY s.kode
+        """).fetchall()
+        conn.close()
+        return [
+            {
+                "kode": r["kode"],
+                "persen_terisi": round((r["terisi"] or 0) * 100 / r["total"]) if r["total"] else 0,
+            }
             for r in rows
         ]

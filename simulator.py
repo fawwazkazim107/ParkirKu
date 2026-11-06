@@ -5,7 +5,7 @@ import requests
 
 SERVER_URL = "http://127.0.0.1:5000/api/update"  # ganti ke alamat PythonAnywhere saat deploy
 API_KEY = "ganti-dengan-kunci-rahasia"
-SLOT_KODE = [f"{z}{i}" for z in "AB" for i in range(1, 6)]
+SLOT_KODE = [f"{z}{i}" for z in "AB" for i in range(1, 5)]
 INTERVAL_DETIK = 5
 
 while True:
