@@ -29,7 +29,6 @@ def on_message(client, userdata, msg):
         kode_slot = data.get("kode")
         status_baru = data.get("status")
         
-        # Panggil fungsi database (models.py)
         if manager.update_status(kode_slot, status_baru):
             print(f"✅ Database terupdate: {kode_slot} -> {status_baru}")
         else:
@@ -40,21 +39,21 @@ def on_message(client, userdata, msg):
 
 def start_mqtt():
     print("Memulai Subscriber MQTT...")
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
-    client.on_message = on_message
     
     try:
-        # Konek ke HiveMQ (Tanpa SSL/Password)
+        # Pindahkan inisialisasi client ke dalam try agar aman
+        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
+        client.on_message = on_message
+        
         client.connect(MQTT_BROKER, MQTT_PORT, 60)
         client.subscribe(MQTT_TOPIC)
         print("✅ MQTT Subscriber Berjalan di Background!")
         
-        # Jalankan loop di background
         client.loop_start() 
     except Exception as e:
         print(f"❌ Gagal konek ke MQTT: {e}")
 
-# Jalankan MQTT di thread terpisah agar tidak memblokir web
+# Jalankan MQTT di thread terpisah
 mqtt_thread = threading.Thread(target=start_mqtt)
 mqtt_thread.daemon = True
 mqtt_thread.start()
@@ -86,3 +85,9 @@ def api_slots():
 @app.route("/api/riwayat-area")
 def api_riwayat_area():
     return jsonify(manager.riwayat_per_area())
+
+# ==========================================
+# JALANKAN APLIKASI FLASK (INI YANG HILANG TADI)
+# ==========================================
+if __name__ == "__main__":
+    app.run(debug=True, use_reloader=False)
