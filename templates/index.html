@@ -14,9 +14,12 @@
       margin: 0 auto;
       padding: 16px;
     }
+    h1, h2, h3 { text-align: center; }
     .kosong-besar { font-size: 3rem; font-weight: bold; text-align: center; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+    .grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
     .slot {
+      box-sizing: border-box;
+      width: 110px;
       padding: 12px 8px;
       border-radius: 8px;
       text-align: center;
@@ -38,38 +41,36 @@
 </head>
 <body>
   <h1>ParkirKu</h1>
-  <p>Slot kosong saat ini:</p>
+  <p style="text-align:center">Slot kosong saat ini:</p>
   <div class="kosong-besar"><span id="kosong">-</span> / <span id="total">-</span></div>
 
   <h2>Daftar Slot</h2>
   <div id="daftar"></div>
 
-  <h2>Riwayat Keterisian per Area</h2>
+  <h2>Slot Terisi per Area</h2>
   <canvas id="grafik-area"></canvas>
-
-  <h2>Riwayat Keterisian per Slot</h2>
-  <canvas id="grafik-slot"></canvas>
 
   <script>
     Chart.defaults.color = "#fff";
-    const charts = {};
+    let chart;
 
-    function gambarBatang(id, labels, nilai) {
-      if (charts[id]) {
-        charts[id].data.labels = labels;
-        charts[id].data.datasets[0].data = nilai;
-        charts[id].update();
+    function gambarBatang(labels, nilai, max) {
+      if (chart) {
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = nilai;
+        chart.options.scales.y.max = max;
+        chart.update();
         return;
       }
-      charts[id] = new Chart(document.getElementById(id), {
+      chart = new Chart(document.getElementById("grafik-area"), {
         type: "bar",
         data: {
           labels,
-          datasets: [{ label: "% terisi", data: nilai, backgroundColor: "#4da6ff" }]
+          datasets: [{ label: "Slot terisi", data: nilai, backgroundColor: "#4da6ff" }]
         },
         options: {
           scales: {
-            y: { min: 0, max: 100, grid: { color: "#333" } },
+            y: { min: 0, max, ticks: { stepSize: 1 }, grid: { color: "#333" } },
             x: { grid: { color: "#333" } }
           }
         }
@@ -92,25 +93,15 @@
               <div class="mobil"></div><b>${s.kode}</b><br>${s.status}
             </div>`).join("") + `</div>`;
       }).join("");
+
+      const namaArea = Object.keys(grup);
+      const terisiPerArea = namaArea.map(a => grup[a].filter(s => s.status === "Terisi").length);
+      const maksSlot = Math.max(...namaArea.map(a => grup[a].length));
+      gambarBatang(namaArea, terisiPerArea, maksSlot);
     }
 
-    async function muatGrafikArea() {
-      const data = await (await fetch("/api/riwayat-area")).json();
-      gambarBatang("grafik-area", data.map(d => d.lokasi), data.map(d => d.persen_terisi));
-    }
-
-    async function muatGrafikSlot() {
-      const data = await (await fetch("/api/riwayat-slot")).json();
-      gambarBatang("grafik-slot", data.map(d => d.kode), data.map(d => d.persen_terisi));
-    }
-
-    function refresh() {
-      muatSlot();
-      muatGrafikArea();
-      muatGrafikSlot();
-    }
-    refresh();
-    setInterval(refresh, 5000);
+    muatSlot();
+    setInterval(muatSlot, 5000);
   </script>
 </body>
 </html>

@@ -86,10 +86,3 @@ def api_slots():
 @app.route("/api/riwayat-area")
 def api_riwayat_area():
     return jsonify(manager.riwayat_per_area())
-
-@app.route("/api/riwayat-slot")
-def api_riwayat_slot():
-    return jsonify(manager.riwayat_per_slot())
-
-if __name__ == "__main__":
-    app.run(debug=True, use_reloader=False)
