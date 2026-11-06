@@ -1,4 +1,0 @@
-[wokwi]
-version = 1
-firmware = "main.py"
-diagram = "diagram.json"
