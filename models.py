@@ -8,8 +8,10 @@ STATUS_VALID = ("Kosong", "Terisi")
 
 
 def get_conn():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA busy_timeout = 10000")
     return conn
 
 
@@ -76,30 +78,54 @@ class ParkingManager:
         conn.close()
         return n
 
+    
     def update_status(self, kode, status):
-        """Update status slot dan catat ke log. Return True jika berhasil."""
+        """
+        Memperbarui status slot.
+        Riwayat hanya dicatat jika status benar-benar berubah.
+        Return True jika slot ditemukan dan status valid.
+        """
+
         if status not in STATUS_VALID:
             return False
+
         conn = get_conn()
-        slot = conn.execute(
-            "SELECT id FROM parking_slots WHERE kode = ?", (kode,)
-        ).fetchone()
-        if slot is None:
+
+        try:
+            with conn:
+                slot = conn.execute(
+                    "SELECT id FROM parking_slots WHERE kode = ?",
+                    (kode,)
+                ).fetchone()
+
+                if slot is None:
+                    return False
+
+                cursor = conn.execute(
+                    """
+                    UPDATE parking_slots
+                    SET status = ?
+                    WHERE id = ? AND status != ?
+                    """,
+                    (status, slot["id"], status)
+                )
+
+                if cursor.rowcount == 1:
+                    waktu = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                    conn.execute(
+                        """
+                        INSERT INTO parking_logs (slot_id, status, waktu)
+                        VALUES (?, ?, ?)
+                        """,
+                        (slot["id"], status, waktu)
+                    )
+
+            return True
+
+        finally:
             conn.close()
-            return False
-        conn.execute(
-            "UPDATE parking_slots SET status = ? WHERE id = ?", (status, slot["id"])
-        )
-        log = ParkingLog(
-            slot["id"], status, datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
-        conn.execute(
-            "INSERT INTO parking_logs (slot_id, status, waktu) VALUES (?, ?, ?)",
-            (log.slot_id, log.status, log.waktu),
-        )
-        conn.commit()
-        conn.close()
-        return True
+
 
     def ringkasan(self):
         slots = self.daftar_slot()
