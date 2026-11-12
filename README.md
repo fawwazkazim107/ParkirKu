@@ -112,12 +112,34 @@ Menyimpan riwayat perubahan status parkir, meliputi:
 - Riwayat dicatat ketika status slot benar-benar berubah.
 
 ### 8.3 Frontend
-Frontend dikembangkan menggunakan HTML, CSS, dan JavaScript.
-- Menampilkan dashboard monitoring parkir.
-- Menampilkan delapan slot parkir.
-- Menampilkan perbedaan status slot kosong dan terisi.
-- Menampilkan ringkasan jumlah slot kosong dan terisi.
-- Mengambil data terbaru dari backend melalui HTTP API.
+Frontend dikembangkan menggunakan HTML, CSS, dan JavaScript yang terdapat pada file templates/index.html.
+
+Frontend bertanggung jawab untuk menampilkan informasi kondisi parkir kepada pengguna melalui website dashboard.
+Fitur frontend:
+1. Ringkasan Ketersediaan Slot
+Menampilkan jumlah slot kosong dari keseluruhan slot parkir. Informasi akan berubah mengikuti data terbaru dari backend.
+2. Daftar Slot Berdasarkan Area
+Menampilkan kartu slot parkir yang dibagi menjadi Area A dan Area B.
+3. Indikator Status Slot
+Menggunakan warna untuk memudahkan pengguna mengetahui kondisi parkir:
+   - Hijau: Slot Kosong.
+   - Merah dengan ikon mobil: Slot Terisi.
+4. Grafik Statistik Parkir
+Menampilkan grafik batang yang menunjukkan jumlah slot terisi pada setiap area parkir menggunakan Chart.js.
+5. Auto-Refresh Data
+Dashboard mengambil data terbaru dari backend secara otomatis setiap 5 detik tanpa perlu melakukan refresh halaman secara manual.
+6. Responsive Design
+Tata letak dashboard dibuat agar dapat menyesuaikan ukuran layar komputer maupun HP.
+
+Konfigurasi frontend (konfigurasi dan keterangan):
+- File utama        : templates/index.html
+- Sumber data       : Endpoint /api/slots
+- Interval pembaruan: setInterval(muatSlot, 5000)
+- Status kosong     : Class CSS .Kosong
+- Status terisi     : Class CSS .Terisi
+- Ikon mobil        : Class CSS .mobil
+- Grafik            : Chart.js melalui CDN
+
 
 ### 8.4 IoT dan Integrasi MQTT
 Bagian IoT dikembangkan menggunakan ESP32 dengan simulator Wokwi dan sensor ultrasonik HC-SR04.
@@ -128,12 +150,12 @@ Bagian IoT dikembangkan menggunakan ESP32 dengan simulator Wokwi dan sensor ultr
 - Mengirimkan data status parkir ke backend melalui protokol MQTT.
 
 Konfigurasi MQTT:
-- Broker = broker.hivemq.com
-- Port = 1883
-- Topic = parkirku/kelompok3/sensor
-- Format data = JSON
+- Broker            = broker.hivemq.com
+- Port              = 1883
+- Topic             = parkirku/kelompok3/sensor
+- Format data       = JSON
 - Platform simulasi = Wokwi
-- Mikrokontroler = ESP32
+- Mikrokontroler    = ESP32
 
 ## 9. Cara Menjalankan Aplikasi
 
