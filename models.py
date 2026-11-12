@@ -3,7 +3,12 @@ import sqlite3
 from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "parkirku.db")
+
+DATA_DIR = os.getenv("PARKIRKU_DATA_DIR", BASE_DIR)
+os.makedirs(DATA_DIR, exist_ok=True)
+
+DB_PATH = os.path.join(DATA_DIR, "parkirku.db")
+
 STATUS_VALID = ("Kosong", "Terisi")
 
 
