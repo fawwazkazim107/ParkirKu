@@ -24,42 +24,144 @@ Sistem ini memungkinkan pengguna melihat jumlah slot parkir, jumlah slot kosong,
 
 ## 4. Teknologi yang Digunakan
 
-- Python
-- Flask
-- SQLite
-- HTML
-- CSS
-- JavaScript
-- ESP32 dan HC-SR04 (integrasi IoT, jika sudah diimplementasikan)
-- Wokwi (simulasi IoT, jika digunakan)
+- Python: Bahasa pemrograman utama untuk menjalankan sistem backend.
+- Flask: Framework Python untuk membangun backend dan API.
+- SQLite: Database untuk menyimpan data slot parkir dan riwayat perubahan status.
+- HTML: Membuat struktur halaman dashboard website.
+- CSS: Mengatur tampilan dan desain dashboard.
+- JavaScript: Mengatur interaksi dan pembaruan informasi pada dashboard.
+- ESP32: Mikrokontroler yang digunakan untuk memproses data sensor.
+- HC-SR04: Sensor ultrasonik untuk mendeteksi jarak kendaraan pada slot parkir.
+- Wokwi: Platform simulasi ESP32 dan sensor ultrasonik.
+- MQTT: Protokol komunikasi untuk mengirimkan data dari perangkat IoT ke backend.
+- HiveMQ: Broker MQTT yang digunakan sebagai perantara pengiriman data sensor.
 
 ## 5. Alur Kerja Sistem
 
-1. Sensor atau simulator mendeteksi kondisi slot parkir.
-2. Data dikirimkan ke backend melalui HTTP API.
-3. Backend Flask menerima dan memvalidasi data.
-4. Data status disimpan ke database SQLite.
-5. Website dashboard mengambil data melalui API.
-6. Pengguna dapat melihat kondisi tempat parkir melalui dashboard.
+ParkirKu terdiri dari beberapa komponen yang saling terhubung, yaitu perangkat IoT, broker MQTT, backend, database, dan frontend.
+1. ESP32 atau simulator Wokwi membaca kondisi slot parkir melalui sensor HC-SR04.
+2. Data kondisi parkir dikirimkan melalui protokol MQTT ke HiveMQ Broker.
+3. Backend Flask menerima pesan dari broker MQTT melalui MQTT Subscriber.
+4. Backend memvalidasi data dan meneruskannya ke pengelola database.
+5. Database SQLite menyimpan status terbaru slot dan riwayat perubahan status.
+6. Frontend mengambil informasi dari backend melalui API.
+7. Dashboard menampilkan jumlah slot kosong, slot terisi, dan status setiap slot kepada pengguna.
 
 ## 6. Struktur Proyek
 
-Bagian ini akan disesuaikan dengan struktur folder dan file yang benar-benar digunakan dalam repository.
+
+```mermaid
+flowchart TD
+    A["Wokwi: ESP32 + Sensor HC-SR04"]
+    B["MQTT"]
+    C["HiveMQ Broker"]
+    D["Backend Flask"]
+    E[("Database SQLite")]
+    F["Dashboard Website"]
+
+    A -->|Data jarak dan status| B
+    B -->|Publish pesan| C
+    C -->|Subscribe pesan| D
+    D -->|Simpan dan perbarui data| E
+    F -->|HTTP API: meminta data| D
+    D -->|JSON: data slot parkir| F
+```
+
 
 ## 7. Instalasi
+Langkah instalasi
+1. Clone repository: git clone https://github.com/fawwazkazim107/ParkirKu.git
+2. Masuk ke direktori proyek: cd ParkirKu
+3. Buat virtual environment: python -m venv venv
+4. Aktifkan virtual environment.
+Windows: venv\Scripts\activate
+5. Instal dependency: pip install -r requirements.txt
+6. Jalankan backend: python app.py
+7. Buka browser dan akses: http://127.0.0.1:5000
+8. Jalankan simulasi ESP32 pada Wokwi untuk mengirim data sensor melalui MQTT.
+   
+## 8. Penjelasan Komponen Sistem
+### 8.1 Backend
+Backend dikembangkan menggunakan Python dan Flask.
+- Menyediakan halaman dashboard website.
+- Menyediakan HTTP API untuk mengambil data slot parkir.
+- Menerima pesan MQTT dari broker HiveMQ.
+- Memproses data sensor yang diterima.
+- Memperbarui status parkir melalui fungsi pada ParkingManager.
+- Menyediakan data ringkasan dan riwayat parkir.
 
-Petunjuk instalasi akan dilengkapi sesuai konfigurasi dan dependensi proyek.
+### 8.2 Database
+Database menggunakan SQLite untuk menyimpan data slot parkir dan riwayat perubahan status.
+Terdapat dua tabel utama:
 
-## 8. Cara Menjalankan Aplikasi
+Tabel parking_slots
 
-Petunjuk menjalankan backend dan dashboard akan dilengkapi setelah implementasi selesai.
+Menyimpan informasi slot parkir, meliputi:
+- ID slot.
+- Kode slot, seperti A1 dan B1.
+- Lokasi atau area parkir.
+- Status slot, yaitu Kosong atau Terisi.
 
-## 9. Pengujian
+Tabel parking_logs
+
+Menyimpan riwayat perubahan status parkir, meliputi:
+- ID riwayat.
+- ID slot yang mengalami perubahan.
+- Status terbaru.
+- Waktu perubahan status.
+- Riwayat dicatat ketika status slot benar-benar berubah.
+
+### 8.3 Frontend
+Frontend dikembangkan menggunakan HTML, CSS, dan JavaScript.
+- Menampilkan dashboard monitoring parkir.
+- Menampilkan delapan slot parkir.
+- Menampilkan perbedaan status slot kosong dan terisi.
+- Menampilkan ringkasan jumlah slot kosong dan terisi.
+- Mengambil data terbaru dari backend melalui HTTP API.
+
+### 8.4 IoT dan Integrasi MQTT
+Bagian IoT dikembangkan menggunakan ESP32 dengan simulator Wokwi dan sensor ultrasonik HC-SR04.
+- Membuat simulasi perangkat keras menggunakan ESP32.
+- Menghubungkan ESP32 dengan sensor ultrasonik HC-SR04.
+- Membaca jarak objek pada setiap slot parkir.
+- Menentukan status parkir berdasarkan hasil pembacaan sensor.
+- Mengirimkan data status parkir ke backend melalui protokol MQTT.
+
+Konfigurasi MQTT:
+- Broker = broker.hivemq.com
+- Port = 1883
+- Topic = parkirku/kelompok3/sensor
+- Format data = JSON
+- Platform simulasi = Wokwi
+- Mikrokontroler = ESP32
+
+## 9. Cara Menjalankan Aplikasi
+
+(Petunjuk menjalankan backend dan dashboard akan dilengkapi setelah implementasi selesai.)
+Demo dilakukan untuk memperlihatkan perubahan status parkir dari simulasi IoT hingga dashboard website.
+### Skenario 1: Kendaraan Masuk
+1. Jalankan backend ParkirKu.
+2. Jalankan simulasi ESP32 pada Wokwi.
+3. Buka dashboard website.
+4. Pilih sensor slot A1 pada simulator.
+5. Ubah jarak menjadi 5 cm.
+6. ESP32 mengirim status Terisi melalui MQTT.
+7. Backend menerima data dan memperbarui database.
+8. Dashboard menampilkan slot A1 sebagai Terisi.
+
+### Skenario 2: Kendaraan Keluar
+1. Ubah jarak sensor A1 menjadi 50 cm.
+2. ESP32 mengirim status Kosong melalui MQTT.
+3. Backend memperbarui status slot pada database.
+4. Dashboard menampilkan slot A1 sebagai Kosong.
+
+Keterangan warna pada dashboard mengikuti implementasi frontend.
+
+## 10. Pengujian
 
 Bagian ini berisi skenario dan hasil pengujian API, database, dashboard, simulator, dan integrasi sistem.
 
-## 10. Tim Pengembang
-
+## 11. Tim Pengembang
 - Fawwaz - Database
 - Alif - Backend
 - Ardhy - Frontend
