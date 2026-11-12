@@ -2,13 +2,14 @@ from flask import Flask, jsonify, render_template, request
 import paho.mqtt.client as mqtt
 import json
 import threading
+import os
 
 from models import ParkingManager, init_db
 
 app = Flask(__name__)
 manager = ParkingManager()
 
-API_KEY = "ganti-dengan-kunci-rahasia"
+API_KEY = os.getenv("PARKIRKU_API_KEY")
 
 # Inisialisasi Database
 init_db()
@@ -67,12 +68,17 @@ def index():
 
 @app.route("/api/update", methods=["POST"])
 def api_update():
+    if not API_KEY:
+        return jsonify({"error": "API key belum dikonfigurasi"}), 500
+
     if request.headers.get("X-API-Key") != API_KEY:
         return jsonify({"error": "API key salah"}), 401
 
     data = request.get_json(silent=True) or {}
+
     if manager.update_status(data.get("kode"), data.get("status")):
         return jsonify({"pesan": "berhasil"})
+
     return jsonify({"error": "kode slot atau status tidak valid"}), 400
 
 @app.route("/api/slots")
