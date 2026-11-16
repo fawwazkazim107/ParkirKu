@@ -30,6 +30,13 @@ def on_message(client, userdata, msg):
         kode_slot = data.get("kode")
         status_baru = data.get("status")
         
+        # --- TAMBAHKAN FILTER INI ---
+        if kode_slot == "PING":
+            print("🏓 [PING TEST] Koneksi internet ESP32 Berhasil!")
+            return # Hentikan proses, jangan simpan PING ke database
+        # ----------------------------
+        
+        # Panggil fungsi database (models.py)
         if manager.update_status(kode_slot, status_baru):
             print(f"✅ Database terupdate: {kode_slot} -> {status_baru}")
         else:
