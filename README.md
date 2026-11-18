@@ -82,13 +82,32 @@ Windows: venv\Scripts\activate
    
 ## 8. Penjelasan Komponen Sistem
 ### 8.1 Backend
-Backend dikembangkan menggunakan Python dan Flask.
-- Menyediakan halaman dashboard website.
-- Menyediakan HTTP API untuk mengambil data slot parkir.
-- Menerima pesan MQTT dari broker HiveMQ.
-- Memproses data sensor yang diterima.
-- Memperbarui status parkir melalui fungsi pada ParkingManager.
-- Menyediakan data ringkasan dan riwayat parkir.
+Backend ParkirKu dikembangkan menggunakan Python dan Flask. Backend berfungsi sebagai penghubung antara perangkat sensor parkir, MQTT Broker, database, dan dashboard website.
+
+Backend bertanggung jawab untuk:
+1. Menerima data sensor parkir melalui MQTT Broker.
+2. Memproses data JSON yang dikirimkan oleh ESP32 atau simulator Wokwi.
+3. Memvalidasi kode slot dan status parkir.
+4. Memperbarui status slot parkir melalui ParkingManager.
+5. Menyimpan perubahan status ke database SQLite.
+6. Menyediakan HTTP API untuk mengambil data slot parkir.
+7. Menyediakan data ringkasan dan riwayat parkir untuk dashboard.
+
+Komponen dan Konfigurasi yang digunakan
+- MQTT Broker : broker.hivemq.com
+- MQTT Port   : 1883
+- MQTT Topic  : parkirku/kelompok3/sensor
+- API Key     : Environment variable PARKIRKU_API_KEY
+- Database    : Diinisialisasi melalui init_db()
+
+Alur Kerja Backend
+1. Sensor parkir pada ESP32 atau Wokwi mengirimkan data ke MQTT Broker HiveMQ.
+2. Backend menggunakan Paho MQTT untuk menerima pesan melalui fungsi on_message().
+3. Data JSON yang diterima diproses untuk mendapatkan kode slot dan status parkir.
+4. Backend meneruskan data ke ParkingManager untuk memproses perubahan status.
+5. Database SQLite diperbarui sesuai kondisi slot parkir.
+6. Data yang telah disimpan dapat diakses melalui API Flask.
+7. Dashboard mengambil data dari API untuk menampilkan kondisi slot parkir terbaru.
 
 ### 8.2 Database
 Database menggunakan SQLite untuk menyimpan data slot parkir dan riwayat perubahan status.
@@ -158,10 +177,25 @@ Konfigurasi MQTT:
 - Mikrokontroler    = ESP32
 
 ## 9. Cara Menjalankan Aplikasi
+### 9.1 Menjalankan Backend dan Dashboard
+1. Pastikan repository ParkirKu sudah di-clone.
+2. Buka folder proyek menggunakan Visual Studio Code.
+3. Aktifkan virtual environment.
+4. Pastikan seluruh dependency sudah terinstal menggunakan pip install -r requirements.txt.
+5. Pastikan konfigurasi MQTT dan environment variable sudah sesuai.
+6. Jalankan backend menggunakan perintah: python app.py
+7. Buka browser dan akses: http://127.0.0.1:5000
+8. Pastikan dashboard berhasil ditampilkan.
 
-(Petunjuk menjalankan backend dan dashboard akan dilengkapi setelah implementasi selesai.)
-Demo dilakukan untuk memperlihatkan perubahan status parkir dari simulasi IoT hingga dashboard website.
-### Skenario 1: Kendaraan Masuk
+### 9.2 Menjalankan Simulasi Wokwi
+1. Buka proyek ESP32 pada Wokwi.
+2. Pastikan konfigurasi koneksi MQTT sudah sesuai.
+3. Jalankan simulasi ESP32.
+4. Pastikan perangkat berhasil mengirimkan data sensor ke MQTT Broker.
+5. Amati perubahan status slot parkir pada dashboard.
+
+### 9.3 Skenario Demo
+Skenario 1: Kendaraan Masuk
 1. Jalankan backend ParkirKu.
 2. Jalankan simulasi ESP32 pada Wokwi.
 3. Buka dashboard website.
@@ -171,7 +205,7 @@ Demo dilakukan untuk memperlihatkan perubahan status parkir dari simulasi IoT hi
 7. Backend menerima data dan memperbarui database.
 8. Dashboard menampilkan slot A1 sebagai Terisi.
 
-### Skenario 2: Kendaraan Keluar
+Skenario 2: Kendaraan Keluar
 1. Ubah jarak sensor A1 menjadi 50 cm.
 2. ESP32 mengirim status Kosong melalui MQTT.
 3. Backend memperbarui status slot pada database.
@@ -181,11 +215,39 @@ Keterangan warna pada dashboard mengikuti implementasi frontend.
 
 ## 10. Pengujian
 
-Bagian ini berisi skenario dan hasil pengujian API, database, dashboard, simulator, dan integrasi sistem.
+Pengujian dilakukan untuk memastikan setiap komponen ParkirKu dapat berjalan sesuai fungsinya, mulai dari pengiriman data sensor hingga informasi ditampilkan pada dashboard website.
 
+### 10.1 Ruang Lingkup dan Hasil Pengujian
+
+| No. | Komponen | Hasil Pengujian | Status |
+|---|---|---|---|
+| 1 | MQTT dan Wokwi | Simulasi ESP32 berhasil terhubung ke HiveMQ dan mengirimkan data JSON ke backend. Namun, koneksi terkadang tidak stabil. | Berhasil dengan catatan |
+| 2 | Backend | Backend Flask berhasil menerima dan memproses data JSON dari MQTT serta memperbarui status slot parkir. | Berhasil |
+| 3 | Database | Data status slot parkir dan perubahan status berhasil disimpan ke SQLite. | Berhasil |
+| 4 | Frontend Dashboard | Jumlah slot kosong, slot terisi, dan kartu status setiap area berhasil ditampilkan sesuai data backend. | Berhasil |
+| 5 | Grafik Statistik | Grafik batang jumlah slot terisi pada setiap area berhasil ditampilkan dan diperbarui otomatis. | Berhasil |
+| 6 | Auto-Refresh | Dashboard berhasil memperbarui data setiap 5 detik tanpa refresh halaman manual. | Berhasil |
+| 7 | Responsive Design | Tampilan dashboard dapat menyesuaikan ukuran layar komputer dan HP. | Berhasil |
+| 8 | Integrasi Sistem | Pengiriman data dari Wokwi melalui MQTT hingga perubahan status pada database dan dashboard berhasil dilakukan saat pengujian. Namun, proses pengiriman data terkadang tidak konsisten. | Berhasil dengan catatan |
+
+### 10.2 Catatan Hasil Pengujian
+
+Berdasarkan pengujian yang telah dilakukan, sebagian besar fitur ParkirKu sudah berjalan sesuai dengan fungsinya. Backend dapat menerima dan memproses data sensor, database dapat menyimpan perubahan status slot parkir, serta frontend dapat menampilkan informasi parkir dan memperbaruinya secara otomatis.
+
+Pada pengujian integrasi Wokwi dan MQTT, simulasi ESP32 berhasil terhubung dengan broker HiveMQ dan mengirimkan data JSON yang diterima oleh backend Flask. Namun, koneksi masih terkadang tidak konsisten sehingga pengiriman dan penerimaan data belum selalu berhasil pada setiap percobaan. Penyebab kendala tersebut masih perlu diperiksa lebih lanjut.
+
+### 10.3 Rencana Pengembangan
+
+Beberapa pengembangan yang dapat dilakukan selanjutnya meliputi:
+
+- Memeriksa dan meningkatkan kestabilan koneksi MQTT antara Wokwi dan backend.
+- Menyempurnakan tampilan dashboard agar lebih informatif.
+- Menambahkan grafik riwayat perubahan status parkir.
+- Memastikan data sensor yang dikirimkan sesuai dengan status slot pada dashboard.
+  
 ## 11. Tim Pengembang
 - Fawwaz - Database
 - Alif - Backend
 - Ardhy - Frontend
 - Ucup - IoT dan Wokwi
-- Anis - Dokumentasi dan Presentasi
+- Anis - Integrasi Testing, Dokumentasi, dan Presentasi.
